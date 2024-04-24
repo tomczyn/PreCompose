@@ -9,7 +9,7 @@ allprojects {
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
             jvmTarget = rootProject.extra.get("jvmTarget") as String
-            allWarningsAsErrors = true
+            allWarningsAsErrors = false
             freeCompilerArgs = listOf(
                 "-opt-in=kotlin.RequiresOptIn",
             )

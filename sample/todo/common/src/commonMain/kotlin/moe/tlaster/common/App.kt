@@ -7,6 +7,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import moe.tlaster.common.scene.BottomSheetApp
 import moe.tlaster.common.scene.NoteDetailScene
 import moe.tlaster.common.scene.NoteEditScene
 import moe.tlaster.common.scene.NoteListScene
@@ -22,24 +23,25 @@ import org.koin.compose.KoinContext
 fun App() {
     PreComposeApp {
         KoinContext {
-            val navigator = rememberNavigator()
+            val navigator = rememberNavigator("nav")
             MaterialTheme {
                 NavHost(
                     navigator = navigator,
                     initialRoute = "/home",
                 ) {
                     scene("/home") {
-                        NoteListScene(
-                            onItemClicked = {
-                                navigator.navigate("/detail/${it.id}")
-                            },
-                            onAddClicked = {
-                                navigator.navigate("/edit")
-                            },
-                            onEditClicked = {
-                                navigator.navigate("/edit/${it.id}")
-                            },
-                        )
+                        BottomSheetApp()
+                        // NoteListScene(
+                        //     onItemClicked = {
+                        //         navigator.navigate("/detail/${it.id}")
+                        //     },
+                        //     onAddClicked = {
+                        //         navigator.navigate("/edit")
+                        //     },
+                        //     onEditClicked = {
+                        //         navigator.navigate("/edit/${it.id}")
+                        //     },
+                        // )
                     }
                     scene("/detail/{id:[0-9]+}") { backStackEntry ->
                         backStackEntry.path<Int>("id")?.let {
