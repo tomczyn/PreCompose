@@ -113,28 +113,31 @@ fun NavHost(
         }
     }
 
-    BoxWithConstraints(modifier) {
-        val currentSceneEntry by navigator.stackManager
-            .currentSceneBackStackEntry.collectAsState(null)
-        val prevSceneEntry by navigator.stackManager
-            .prevSceneBackStackEntry.collectAsState(null)
-        var progress by remember { mutableFloatStateOf(0f) }
-        var inPredictiveBack by remember { mutableStateOf(false) }
-        PredictiveBackHandler(canGoBack) { backEvent ->
-            inPredictiveBack = true
-            progress = 0f
-            try {
-                backEvent.collect {
-                    progress = it
-                }
-                if (progress != 1f) {
-                    // play the animation to the end
-                    progress = 1f
-                }
-            } catch (e: CancellationException) {
-                inPredictiveBack = false
+    val currentSceneEntry by navigator.stackManager
+        .currentSceneBackStackEntry.collectAsState(null)
+    val prevSceneEntry by navigator.stackManager
+        .prevSceneBackStackEntry.collectAsState(null)
+    val currentFloatingEntry by navigator.stackManager
+        .currentFloatingBackStackEntry.collectAsState(null)
+    var progress by remember { mutableFloatStateOf(0f) }
+    var inPredictiveBack by remember { mutableStateOf(false) }
+    PredictiveBackHandler(canGoBack) { backEvent ->
+        inPredictiveBack = true
+        progress = 0f
+        try {
+            backEvent.collect {
+                progress = it
             }
+            if (progress != 1f) {
+                // play the animation to the end
+                progress = 1f
+            }
+        } catch (e: CancellationException) {
+            inPredictiveBack = false
         }
+    }
+    if(currentSceneEntry == null && currentFloatingEntry == null) return
+    BoxWithConstraints(modifier) {
         currentSceneEntry?.let { sceneEntry ->
             val actualSwipeProperties = sceneEntry.swipeProperties ?: swipeProperties
             val state = if (actualSwipeProperties != null) {
@@ -207,30 +210,31 @@ fun NavHost(
             } else {
                 updateTransition(sceneEntry, label = "entry")
             }
-            val transitionSpec: AnimatedContentTransitionScope<BackStackEntry>.() -> ContentTransform = {
-                val actualTransaction = run {
-                    if (navigator.stackManager.contains(initialState) && !showPrev) targetState else initialState
-                }.navTransition ?: navTransition
-                if (!navigator.stackManager.contains(initialState) || showPrev) {
-                    ContentTransform(
-                        targetContentEnter = actualTransaction.resumeTransition,
-                        initialContentExit = actualTransaction.destroyTransition,
-                        targetContentZIndex = actualTransaction.enterTargetContentZIndex,
-                        // sizeTransform will cause the content to be resized
-                        // when the transition is running with swipe back
-                        // I have no idea why
-                        // And it cost me weeks to figure it out :(
-                        sizeTransform = null,
-                    )
-                } else {
-                    ContentTransform(
-                        targetContentEnter = actualTransaction.createTransition,
-                        initialContentExit = actualTransaction.pauseTransition,
-                        targetContentZIndex = actualTransaction.exitTargetContentZIndex,
-                        sizeTransform = null,
-                    )
+            val transitionSpec: AnimatedContentTransitionScope<BackStackEntry>.() -> ContentTransform =
+                {
+                    val actualTransaction = run {
+                        if (navigator.stackManager.contains(initialState) && !showPrev) targetState else initialState
+                    }.navTransition ?: navTransition
+                    if (!navigator.stackManager.contains(initialState) || showPrev) {
+                        ContentTransform(
+                            targetContentEnter = actualTransaction.resumeTransition,
+                            initialContentExit = actualTransaction.destroyTransition,
+                            targetContentZIndex = actualTransaction.enterTargetContentZIndex,
+                            // sizeTransform will cause the content to be resized
+                            // when the transition is running with swipe back
+                            // I have no idea why
+                            // And it cost me weeks to figure it out :(
+                            sizeTransform = null,
+                        )
+                    } else {
+                        ContentTransform(
+                            targetContentEnter = actualTransaction.createTransition,
+                            initialContentExit = actualTransaction.pauseTransition,
+                            targetContentZIndex = actualTransaction.exitTargetContentZIndex,
+                            sizeTransform = null,
+                        )
+                    }
                 }
-            }
             transition.AnimatedContent(
                 transitionSpec = transitionSpec,
                 contentKey = { it.stateId },
@@ -245,8 +249,6 @@ fun NavHost(
                 )
             }
         }
-        val currentFloatingEntry by navigator.stackManager
-            .currentFloatingBackStackEntry.collectAsState(null)
         currentFloatingEntry?.let {
             AnimatedContent(
                 it,
